@@ -1,0 +1,104 @@
+pip install pygame
+import pygame
+import random
+pygame.init()
+WIDTH, HEIGHT = 480, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Road Fighters")
+
+clock = pygame.time.Clock()
+FPS = 60
+
+WHITE = (255, 255, 255)
+GRAY = (100, 100, 100)
+BLACK = (0, 0, 0)
+def create_car_surface(color):
+    surface = pygame.Surface((50, 100))
+    surface.fill(color)
+    return surface
+
+player_car_img = create_car_surface((0, 200, 0))  # Green car
+enemy_car_img = create_car_surface((200, 0, 0))   # Red car
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = player_car_img
+        self.rect = self.image.get_rect()
+        self.rect.centerx = WIDTH // 2
+        self.rect.bottom = HEIGHT - 10
+        self.speed = 5
+
+    def update(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and self.rect.left > 50:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT] and self.rect.right < WIDTH - 50:
+            self.rect.x += self.speed
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = enemy_car_img
+        self.rect = self.image.get_rect()
+        self.rect.x = random.choice([100, 200, 300])
+        self.rect.y = -100
+        self.speedy = random.randint(4, 8)
+
+    def update(self):
+        self.rect.y += self.speedy
+        if self.rect.top > HEIGHT:
+            self.rect.y = -100
+            self.rect.x = random.choice([100, 200, 300])
+            self.speedy = random.randint(4, 8)
+all_sprites = pygame.sprite.Group()
+enemies = pygame.sprite.Group()
+
+player = Player()
+all_sprites.add(player)
+
+for _ in range(5):
+    enemy = Enemy()
+    all_sprites.add(enemy)
+    enemies.add(enemy)
+
+score = 0
+font = pygame.font.SysFont(None, 36)
+
+def draw_score():
+    score_text = font.render(f"Score: {score}", True, WHITE)
+    screen.blit(score_text, (10, 10))
+running = True
+game_over = False
+
+try:
+    while running:
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        if not game_over:
+            all_sprites.update()
+
+            if pygame.sprite.spritecollideany(player, enemies):
+                print("Game Over! Final Score:", score)
+                game_over = True
+
+            score += 1
+
+        screen.fill(GRAY)
+        pygame.draw.rect(screen, BLACK, (50, 0, 380, 600))
+        pygame.draw.line(screen, WHITE, (140, 0), (140, 600), 2)
+        pygame.draw.line(screen, WHITE, (240, 0), (240, 600), 2)
+        pygame.draw.line(screen, WHITE, (340, 0), (340, 600), 2)
+
+        all_sprites.draw(screen)
+        draw_score()
+        pygame.display.flip()
+
+except KeyboardInterrupt:
+    print("Game manually stopped. Final Score:", score)
+
+finally:
+    pygame.quit()
+
